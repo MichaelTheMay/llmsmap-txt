@@ -4,10 +4,27 @@ import type { ScrapedPage } from './types.js'
 
 const FIRECRAWL_API = 'https://api.firecrawl.dev/v1'
 
+interface CrawlItem {
+  markdown?: string
+  metadata?: {
+    sourceURL?: string
+    title?: string
+    description?: string
+    statusCode?: number
+  }
+}
+
+interface CrawlStatusResponse {
+  status: string
+  completed: number
+  total: number
+  data?: CrawlItem[]
+  next?: string
+}
+
 /**
  * Discover and scrape all pages using Firecrawl's crawl API.
- * This follows links to discover pages that sitemap-only map misses.
- * Returns already-scraped pages (crawl does both discovery + scraping).
+ * Handles pagination via the `next` cursor to collect ALL results.
  */
 export async function crawlSite(
   apiKey: string,
@@ -51,30 +68,37 @@ export async function crawlSite(
       headers: { 'Authorization': `Bearer ${apiKey}` },
     })
 
-    const statusData = await statusResponse.json() as {
-      status: string
-      completed: number
-      total: number
-      data?: Array<{
-        markdown?: string
-        metadata?: {
-          sourceURL?: string
-          title?: string
-          description?: string
-          statusCode?: number
-        }
-      }>
-    }
+    const statusData = await statusResponse.json() as CrawlStatusResponse
 
     onProgress?.(statusData.status, statusData.completed, statusData.total)
 
     if (statusData.status === 'completed') {
-      const pages: ScrapedPage[] = []
+      // Collect all items, following pagination
+      const allItems: CrawlItem[] = [...(statusData.data ?? [])]
+      let nextUrl = statusData.next
 
-      for (const item of statusData.data ?? []) {
+      while (nextUrl) {
+        const nextResponse = await fetch(nextUrl, {
+          headers: { 'Authorization': `Bearer ${apiKey}` },
+        })
+        const nextData = await nextResponse.json() as CrawlStatusResponse
+        allItems.push(...(nextData.data ?? []))
+        nextUrl = nextData.next
+      }
+
+      // Filter and convert to ScrapedPage
+      const pages: ScrapedPage[] = []
+      const seenUrls = new Set<string>()
+
+      for (const item of allItems) {
         if (!item.markdown || !item.metadata?.sourceURL) continue
 
         const url = item.metadata.sourceURL
+
+        // Deduplicate by URL
+        if (seenUrls.has(url)) continue
+        seenUrls.add(url)
+
         // Apply include/exclude filters
         if (config.include?.length && !config.include.some(p => matchGlob(url, p, config.url))) continue
         if (config.exclude.some(p => matchGlob(url, p, config.url))) continue

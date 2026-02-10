@@ -51,8 +51,10 @@ export async function startDevServer(outputDir: string, port: number): Promise<v
     if (pathname === '/llms/fetch') {
       const params = {
         sections: url.searchParams.get('sections') ?? undefined,
+        search: url.searchParams.get('search') ?? undefined,
         format: url.searchParams.get('format') ?? undefined,
         updated_after: url.searchParams.get('updated_after') ?? undefined,
+        limit: url.searchParams.get('limit') ?? undefined,
       }
 
       const result = handler(params)
@@ -73,6 +75,8 @@ export async function startDevServer(outputDir: string, port: number): Promise<v
       console.log(chalk.dim(`    GET /llmsmap.txt`))
       console.log(chalk.dim(`    GET /manifest.json`))
       console.log(chalk.dim(`    GET /llms/fetch?sections=/path1,/path2`))
+      console.log(chalk.dim(`    GET /llms/fetch?sections=/docs/*`))
+      console.log(chalk.dim(`    GET /llms/fetch?search=keyword`))
       console.log('')
     })
   })

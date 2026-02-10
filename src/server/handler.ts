@@ -1,11 +1,13 @@
-import { loadManifest, resolveSections } from './resolver.js'
+import { loadManifest, resolveSections, searchSections } from './resolver.js'
 import { formatResponse, type Format } from './formats.js'
 import type { Manifest } from '../generator/manifest-writer.js'
 
 export interface FetchRequest {
   sections?: string
+  search?: string
   format?: string
   updated_after?: string
+  limit?: string
 }
 
 export interface FetchResponse {
@@ -27,11 +29,11 @@ export function createHandler(baseDir: string) {
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
     }
 
-    if (!params.sections) {
+    if (!params.sections && !params.search) {
       return {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'sections parameter required' }),
+        body: JSON.stringify({ error: 'sections or search parameter required' }),
       }
     }
 
@@ -48,13 +50,25 @@ export function createHandler(baseDir: string) {
       }
     }
 
-    const paths = params.sections.split(',').map(s => s.trim())
     const format = (params.format ?? 'md') as Format
     const updatedAfter = params.updated_after
 
-    const sections = resolveSections(manifest, baseDir, paths, {
-      updatedAfter,
-    })
+    let sections
+
+    if (params.search) {
+      // Search mode
+      const limit = params.limit ? parseInt(params.limit, 10) : 10
+      sections = searchSections(manifest, baseDir, params.search, {
+        updatedAfter,
+        limit,
+      })
+    } else {
+      // Section fetch mode (supports wildcards)
+      const paths = params.sections!.split(',').map(s => s.trim())
+      sections = resolveSections(manifest, baseDir, paths, {
+        updatedAfter,
+      })
+    }
 
     const { body, contentType } = formatResponse(sections, format)
 

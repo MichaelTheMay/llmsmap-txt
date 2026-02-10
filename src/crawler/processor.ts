@@ -8,7 +8,8 @@ export function processPages(pages: ScrapedPage[], baseUrl: string): ProcessedPa
 function processPage(page: ScrapedPage, baseUrl: string): ProcessedPage {
   const path = urlToPath(page.url, baseUrl)
   const markdown = cleanMarkdown(page.markdown)
-  const title = page.title ?? extractTitle(markdown) ?? pathToTitle(path)
+  const rawTitle = page.title ?? extractTitle(markdown) ?? pathToTitle(path)
+  const title = cleanTitle(rawTitle)
   // Prefer content-extracted description over meta description
   // (meta description is often the same site-wide OG description)
   const description = extractDescription(markdown) ?? page.description ?? ''
@@ -79,4 +80,15 @@ function pathToTitle(path: string): string {
   return segment
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+/**
+ * Strip common site-name suffixes from page titles.
+ * "Getting Started | Vercel Docs" → "Getting Started"
+ * "Home - My Site" → "Home"
+ */
+function cleanTitle(title: string): string {
+  return title
+    .replace(/\s*[|–—-]\s*[^|–—-]+$/, '')
+    .trim() || title
 }
