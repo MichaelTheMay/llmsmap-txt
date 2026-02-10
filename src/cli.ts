@@ -8,7 +8,7 @@ const program = new Command()
 program
   .name('llmsmap-txt')
   .description('Composable context for LLM-readable websites')
-  .version('0.1.0')
+  .version('0.2.0')
 
 program.addCommand(initCommand)
 program.addCommand(generateCommand)

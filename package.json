@@ -1,6 +1,6 @@
 {
   "name": "llmsmap-txt",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Composable context for LLM-readable websites. Generate hierarchical content maps with selective retrieval.",
   "type": "module",
   "bin": {

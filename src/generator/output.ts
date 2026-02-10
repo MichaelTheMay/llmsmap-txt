@@ -63,6 +63,7 @@ export async function generate(
     siteName,
     siteDescription: siteDesc,
     fetchEndpoint: `${config.url}${fetchPath}`,
+    siteUrl: config.url,
   })
 
   // 7. Write fetch handlers

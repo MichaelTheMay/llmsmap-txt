@@ -31,7 +31,15 @@ export async function loadConfig(flags: CLIFlags = {}): Promise<Config> {
   if (process.env.FIRECRAWL_API_KEY) raw.firecrawlApiKey = process.env.FIRECRAWL_API_KEY
 
   // CLI flags override everything
-  if (flags.url) raw.url = flags.url
+  if (flags.url) {
+    // When URL is overridden, clear site-specific config from file
+    const fileUrl = fileConfig.url as string | undefined
+    if (fileUrl && flags.url !== fileUrl) {
+      delete raw.siteName
+      delete raw.siteDescription
+    }
+    raw.url = flags.url
+  }
   if (flags.key) raw.firecrawlApiKey = flags.key
   if (flags.output) raw.outputDir = flags.output
   if (flags.include) raw.include = flags.include

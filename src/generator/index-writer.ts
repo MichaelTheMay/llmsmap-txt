@@ -10,6 +10,7 @@ export function writeIndexFile(
     siteName?: string
     siteDescription?: string
     fetchEndpoint?: string
+    siteUrl?: string
   },
 ): number {
   const content = renderIndex(root, options)
