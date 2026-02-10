@@ -39,6 +39,10 @@
     "crawl",
     "firecrawl"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MichaelTheMay/llmsmap-txt.git"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18"
